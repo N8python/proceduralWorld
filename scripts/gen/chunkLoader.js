@@ -91,6 +91,34 @@ class ChunkLoader extends ChunkManager {
         })
         return highestPoint;
     }
+    objectAbove(x, y, z, tolerance) {
+        const theChunk = this.chunkAt(Math.round(x), Math.round(z));
+        const startPoint = new THREE.Vector3(x, y, z);
+        const endPoint = new THREE.Vector3(x, y + tolerance, z);
+        const raycaster = new THREE.Raycaster(endPoint, startPoint.sub(endPoint).normalize());
+        const offsets = [
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(0.1, 0, 0),
+            new THREE.Vector3(0, 0, 0.1),
+            new THREE.Vector3(-0.1, 0, 0),
+            new THREE.Vector3(0, 0, -0.1),
+        ]
+        const intersects = [];
+        offsets.forEach(offset => {
+            startPoint.x = x;
+            startPoint.y = y;
+            startPoint.z = z;
+            endPoint.x = x;
+            endPoint.y = y - tolerance;
+            endPoint.z = z;
+            raycaster.set(endPoint.add(offset), startPoint.add(offset).sub(endPoint).normalize());
+            intersects.push(...raycaster.intersectObjects([...theChunk.entities.map(e => e.mesh)], true));
+        })
+        if (intersects.length > 0) {
+            return true;
+        }
+        return false;
+    }
     update() {
         if (this.currCenterChunk.x !== Math.floor(this.target.position.x) || this.currCenterChunk.z !== Math.floor(this.target.position.z)) {
             this.load({

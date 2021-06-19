@@ -25,6 +25,7 @@ class MainScene extends Scene3D {
         this.third.camera.updateProjectionMatrix();
         this.player = this.third.add.sphere({ x: 0, z: 0, y: 0.25, radius: 0.0000001 }, { phong: { color: "white" } });
         this.player.onGround = true;
+        this.player.hasBounced = false;
         this.player.velocity = new THREE.Vector3();
         this.firstPersonControls = new FirstPersonControls(this.third.camera, this.player, {});
         this.chunkLoader = new ChunkLoader({
@@ -130,8 +131,15 @@ class MainScene extends Scene3D {
                     } else {
                         this.player.onGround = true;
                     }
+                    if (this.player.onGround) {
+                        this.player.hasBounced = false;
+                    }
                     if (!this.player.onGround) {
                         this.player.velocity.y -= 0.0015;
+                        if (this.chunkLoader.objectAbove(this.player.position.x, this.player.position.y, this.player.position.z, 0.1) && !this.player.hasBounced) {
+                            this.player.hasBounced = true;
+                            this.player.velocity.y *= -0.1;
+                        }
                     }
                 }
             } catch (e) {
