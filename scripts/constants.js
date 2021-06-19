@@ -1,0 +1,1 @@
+const { enable3d, Scene3D, Canvas, THREE, FirstPersonControls, ExtendedObject3D } = ENABLE3D

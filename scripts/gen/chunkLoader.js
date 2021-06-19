@@ -82,8 +82,14 @@ class ChunkLoader extends ChunkManager {
         const startPoint = new THREE.Vector3(x, 300, z);
         const endPoint = new THREE.Vector3(x, -300, z);
         const raycaster = new THREE.Raycaster(endPoint, startPoint.sub(endPoint).normalize());
-        const intersects = raycaster.intersectObject(theChunk.mesh);
-        return intersects[0].point.y;
+        const intersects = raycaster.intersectObjects([...theChunk.entities.map(e => e.mesh), theChunk.mesh], true);
+        let highestPoint = -Infinity;
+        intersects.forEach(sect => {
+            if (sect.point.y > highestPoint) {
+                highestPoint = sect.point.y;
+            }
+        })
+        return highestPoint;
     }
     update() {
         if (this.currCenterChunk.x !== Math.floor(this.target.position.x) || this.currCenterChunk.z !== Math.floor(this.target.position.z)) {
