@@ -6,9 +6,22 @@ class Chunk {
     }) {
         this.x = x;
         this.z = z;
+        this.id = x * Math.abs(x) + z * Math.abs(z);
         this.size = size;
         this.entities = [];
         this.mesh = this.build();
+        //console.log("First: " + this.entities.length);
+        for (let i = 0; i < 3; i++) {
+            this.entities.forEach(entity => {
+                this.entities.forEach(entity2 => {
+                    if (entity !== entity2 && entity.mesh.position.distanceTo(entity2.mesh.position) < 0.01) {
+                        this.entities.splice(this.entities.indexOf(entity2), 1);
+                        //entity2.remove(mainScene);
+                    }
+                })
+            });
+        }
+        //console.log("Last: " + this.entities.length);
     }
     build() {
         const width = this.size;
@@ -72,7 +85,7 @@ class Chunk {
                     color[1] = 150;
                     color[2] = 150;
                     const scaleRand = 1 + 0.15 * randNoise((this.x + x) * 4 + 5000, (this.z + y) * 4 + 5000);
-                    if (x % 0.0625 === 0 && y % 0.0625 === 0 && randNoise((this.x + x) * 16 - 5000, (this.z + y) * 16 - 5000) > 0.9) {
+                    if (x % 0.0625 === 0 && y % 0.0625 === 0 && randNoise((this.x + x) * 16 - 5000 + this.id, (this.z + y) * 16 - 5000 + this.id) > 0.9) {
                         this.entities.push(new Rock({
                             x: this.x + x,
                             z: this.z + y,
@@ -114,7 +127,7 @@ class Chunk {
             }
             if (sandIntensity < 0.1) {
                 const scaleRand = 1 + 0.15 * randNoise((this.x + x) * 4 + 5000, (this.z + y) * 4 + 5000);
-                if (x % 0.0625 === 0 && y % 0.0625 === 0 && randNoise((this.x + x) * 16 - 5000, (this.z + y) * 16 - 5000) > 0.99) {
+                if (x % 0.0625 === 0 && y % 0.0625 === 0 && randNoise((this.x + x) * 16 - 5000 + this.id, (this.z + y) * 16 - 5000 + this.id) > 0.99) {
                     this.entities.push(new Bush({
                         x: this.x + x,
                         z: this.z + y,
@@ -127,7 +140,7 @@ class Chunk {
             }
             if (rockIntensity < 0.1) {
                 const scaleRand = 1 + 0.15 * randNoise((this.x + x) * 4 + 5000, (this.z + y) * 4 + 5000);
-                if (x % 0.0625 === 0 && y % 0.0625 === 0 && randNoise((this.x + x) * 16 - 5000, (this.z + y) * 16 - 5000) > 0.975) {
+                if (x % 0.0625 === 0 && y % 0.0625 === 0 && randNoise((this.x + x) * 16 - 5000 + this.id, (this.z + y) * 16 - 5000 + this.id) > 0.975) {
                     this.entities.push(new Flower({
                         x: this.x + x,
                         z: this.z + y,
@@ -145,7 +158,7 @@ class Chunk {
                 scale: [0.001, 0.001, 0.001],
                 model: mainScene.models.tree
             }))*/
-            let treeIntensity = noise.simplex2((this.x + x - 15000) * 10, (this.z + y - 15000) * 10) ** 2.5;
+            let treeIntensity = noise.simplex2((this.x + x + this.id - 15000) * 10, (this.z + y + this.id - 15000) * 10) ** 2.5;
             const scaleRand = 1 + 0.15 * randNoise((this.x + x) * 4 + 5000, (this.z + y) * 4 + 5000);
             if (treeIntensity > 0.7 && x % 0.25 === 0 && y % 0.25 === 0) {
                 this.entities.push(new Tree({
