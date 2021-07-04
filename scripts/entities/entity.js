@@ -5,15 +5,16 @@ class Entity {
         z,
         scale = [1, 1, 1],
         rotation = [0, 0, 0],
-        model
+        model,
+        rigged = false
     }) {
         this.x = x;
         this.y = y;
         this.z = z;
         this.scale = scale;
-        this.model = model;
+        this.model = rigged ? THREE.SkeletonUtils.clone(model) : model.clone();
         this.mesh = new ExtendedObject3D();
-        this.mesh.add(this.model.clone());
+        this.mesh.add(this.model);
         this.mesh.scale.set(...scale);
         this.mesh.position.x = x;
         this.mesh.position.y = y;
@@ -25,8 +26,17 @@ class Entity {
             if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
+                /*child.geometry = child.geometry.clone();
+                child.material = child.material.clone();
+                child.updateMorphTargets();
+                child.matrix = new THREE.Matrix4();
+                child.matrixWorld = new THREE.Matrix4();
+
+                child.matrixAutoUpdate = THREE.Object3D.DefaultMatrixAutoUpdate;
+                child.matrixWorldNeedsUpdate = false;
+                child.layers = new THREE.Layers();*/
             }
-        })
+        });
     }
     add(scene) {
         scene.third.add.existing(this.mesh);

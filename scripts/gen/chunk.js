@@ -167,7 +167,7 @@ class Chunk {
                     y: -z,
                     scale: [0.001 * scaleRand, 0.001 * scaleRand, 0.001 * scaleRand],
                     rotation: [0, Math.PI * 2 * randNoise((this.x + x) * 4, (this.z + y) * 4), 0],
-                    model: mainScene.models.tree
+                    model: randNoise((this.x + x) * 4 + 20000, (this.z + y) * 4 + 20000) < 0 ? mainScene.models.tree : mainScene.models.darktree
                 }))
             }
             //console.time();
