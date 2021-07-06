@@ -1,0 +1,1 @@
+const goals = [wanderGoal, attackGoal, deathGoal];

@@ -12,12 +12,13 @@ class MainScene extends Scene3D {
         this.third.warpSpeed("-ground", "-orbitControls", "-light");
         mainScene = this;
         this.third.load.preload("tree", "./assets/models/tree.fbx");
-        this.third.load.preload("darktree", "./assets/models/darktree3.glb");
+        this.third.load.preload("darktree", "./assets/models/darktree.glb");
         this.third.load.preload("rock", "./assets/models/rock.fbx");
         this.third.load.preload("bush", "./assets/models/bush.fbx");
         this.third.load.preload("flower", "./assets/models/flower.fbx");
         this.third.load.preload("axe", "./assets/models/axe.glb");
-        this.third.load.preload("goblin", "./assets/models/enemies/goblin/model3.fbx");
+        this.third.load.preload("goblin", "./assets/models/enemies/goblin/model.fbx");
+        this.third.load.preload("club", "./assets/models/club.glb");
         this.models = {
             "tree": await this.third.load.fbx("tree"),
             "darktree": (await this.third.load.gltf("darktree")).scene,
@@ -25,15 +26,52 @@ class MainScene extends Scene3D {
             "bush": await this.third.load.fbx("bush"),
             "flower": await this.third.load.fbx("flower"),
             "axe": (await this.third.load.gltf("axe")).scene,
-            "goblin": await this.third.load.fbx("goblin")
+            "goblin": await this.third.load.fbx("goblin"),
+            "club": (await this.third.load.gltf("club")).scene
         };
+        this.images = {
+            "fleshWound": document.getElementById("fleshWound"),
+            "critWound": document.getElementById("critWound"),
+            "lethalWound": document.getElementById("lethalWound")
+        }
         this.models.darktree.scale.set(33, 33, 33);
         this.third.camera.near = 0.01;
         this.third.camera.updateProjectionMatrix();
         this.player = this.third.add.sphere({ x: 0, z: 0, y: 0.25, radius: 0.0000001 }, { phong: { color: "white" } });
-        /*this.player.onGround = true;
-        this.player.hasBounced = false;
-        this.player.velocity = new THREE.Vector3();*/
+        this.player.mesh = this.player;
+        this.player.scene = this;
+        this.player.hit = function hit(power, theta, source) {
+                if (this.scene.playerController.weaponState === "block") {
+                    this.scene.playerController.weaponState = "idle";
+                    this.scene.playerController.weaponController.addTargetPosition(-0.3, -0.7, 0, 750);
+                    this.scene.playerController.weaponController.addTargetRotation(-0.3, 1, 0.5, 750);
+                    this.scene.playerController.weaponController.addTargetPosition(0, 0, 0, 750);
+                    this.scene.playerController.weaponController.addTargetRotation(0, 0, 0, 750);
+                    return;
+                }
+                theta += (0.05 * Math.random() - 0.025);
+                power *= 0.8 + 0.4 * Math.random();
+                this.scene.playerController.velocity.x += 0.015 * power * Math.sin(theta);
+                this.scene.playerController.velocity.z += 0.015 * power * Math.cos(theta);
+                this.scene.playerController.velocity.y += 0.01 * power;
+                if (Math.random() < 0.5) {
+                    this.scene.playerController.targetRoll = 0.075;
+                } else {
+                    this.scene.playerController.targetRoll = -0.075;
+                }
+                this.scene.playerController.cameraShakeTick = 15;
+                this.scene.playerController.takeDamage(power);
+                /*if (source === this.scene.player) {
+                    this.goal = { type: "attack", memory: { target: this.scene.player } }
+                }*/
+            }
+            /*this.player.onGround = true;
+            this.player.hasBounced = false;
+            this.player.velocity = new THREE.Vector3();*/
+        const healthCanvas = document.getElementById("healthBar");
+        const healthCtx = healthCanvas.getContext("2d");
+        this.healthCanvas = healthCanvas;
+        this.healthCtx = healthCtx;
         this.firstPersonControls = new FirstPersonControls(this.third.camera, this.player, {});
         this.chunkLoader = new ChunkLoader({
             scene: this,
@@ -117,8 +155,8 @@ class MainScene extends Scene3D {
         this.entities.push(this.testGoblin);
         //this.testSphere = this.third.add.sphere({ radius: 0.05, y: 0.5 }, { phong: { color: 'red' } });
         //this.third.add.sphere({ radius: 0.25 }, { phong: { color: "red" } })
-        for (let i = -5; i < 5; i++) {
-            for (let j = -5; j < 5; j++) {
+        for (let i = -2; i < 2; i++) {
+            for (let j = -2; j < 2; j++) {
                 this.entities.push(new Goblin({
                     x: 0.25 * i,
                     y: 0.26,
@@ -130,6 +168,8 @@ class MainScene extends Scene3D {
             }
         }
         //this.third.add.existing(this.models.goblin);
+        //this.third.add.existing(this.models.club);
+        //this.third.renderer.setPixelRatio();
         this.initiated = true;
     }
     update(time, delta) {
@@ -157,8 +197,6 @@ class MainScene extends Scene3D {
             } else if (entity.initiated) {
                 entity.update();
             }
-            //entity.mesh.position.z -= 0.01;
-            //entity.mesh.position.x -= 0.01;
         });
         //this.testGoblin.mesh.position.z += 0.01;
         //this.testGoblin.mesh.position.x -= 0.01;

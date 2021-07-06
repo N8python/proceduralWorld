@@ -67,6 +67,11 @@ function parallelTraverse(a, b, callback) {
     }
 
 }
+
+function angleDifference(angle1, angle2) {
+    const diff = ((angle2 - angle1 + Math.PI) % (Math.PI * 2)) - Math.PI;
+    return (diff < -Math.PI) ? diff + (Math.PI * 2) : diff;
+}
 /*THREE.Mesh.prototype.clone = function(object) {
     if (object === undefined) object = new THREE.Mesh(this.geometry, this.material);
     //THREE.Object3D.prototype.copy.call(this, object);

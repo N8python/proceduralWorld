@@ -19,6 +19,24 @@ class WeaponController {
         ];
         this.currWeaponPosition = { x: 0, y: 0, z: 0 };
     }
+    handleSwing({ leftBound = -Math.PI / 4, rightBound = Math.PI / 4, strength = 1 }) {
+        if (!this.scene) {
+            return;
+        }
+        [...this.scene.entities, ...this.scene.chunkLoader.chunkAt(Math.round(this.scene.player.position.x), Math.round(this.scene.player.position.z)).entities].forEach(object => {
+            const theta = Math.atan2(object.mesh.position.x - this.scene.player.position.x, object.mesh.position.z - this.scene.player.position.z);
+            const dist = Math.hypot(object.mesh.position.x - this.scene.player.position.x, object.mesh.position.z - this.scene.player.position.z);
+            const direction = new THREE.Vector3();
+            const rotation = this.scene.third.camera.getWorldDirection(direction);
+            const cTheta = Math.atan2(rotation.x, rotation.z);
+            const angleDiff = cTheta - theta;
+            if (angleDiff < rightBound && angleDiff > leftBound) {
+                if (Math.abs(object.mesh.position.y - this.scene.player.position.y) < 0.4 && dist < 0.4) {
+                    object.hit(strength, cTheta, this.scene.player);
+                }
+            }
+        })
+    }
     update() {
         const deltaRot = new THREE.Vector3();
         if (this.targetWeaponRotations.length > 0) {
@@ -37,6 +55,10 @@ class WeaponController {
         const weaponChange = new THREE.Vector3();
         if (this.targetWeaponPositions.length > 0) {
             const target = this.targetWeaponPositions[0];
+            if (target.progress === 0 && target.attack) {
+                this.handleSwing(target.attack);
+                target.attack = undefined;
+            }
             target.progress += this.scene.delta;
             const percent = easeInOut(target.progress / target.time);
             const rp = target.progress / target.time;
@@ -62,11 +84,11 @@ class WeaponController {
         this.weapon.rotateY(this.defaultRotation.y + this.currWeaponRotation.y + deltaRot.y);
         this.weapon.rotateZ(this.defaultRotation.z + this.currWeaponRotation.z + deltaRot.z);
     }
-    addTargetPosition(x, y, z, time) {
-        this.targetWeaponPositions.push({ x, y, z, time, progress: 0 });
+    addTargetPosition(x, y, z, time, attack) {
+        this.targetWeaponPositions.push({ x, y, z, time, attack, progress: 0 });
     }
-    addTargetRotation(x, y, z, time) {
-        this.targetWeaponRotations.push({ x, y, z, time, progress: 0 });
+    addTargetRotation(x, y, z, time, attack) {
+        this.targetWeaponRotations.push({ x, y, z, time, attack, progress: 0 });
     }
     smoothTransition() {
         const tp = this.targetWeaponPositions[this.targetWeaponPositions.length - 1];

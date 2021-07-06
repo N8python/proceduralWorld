@@ -1,0 +1,1 @@
+const states = [idleState, moveToState, attackState, deathState];

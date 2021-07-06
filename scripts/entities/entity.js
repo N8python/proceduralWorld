@@ -56,6 +56,9 @@ class Entity {
                 }
             }
         })
-        scene.third.scene.children.splice(scene.third.scene.children.indexOf(this.mesh), 1);
+        if (scene.third.scene.children.indexOf(this.mesh) >= 0) {
+            scene.third.scene.children.splice(scene.third.scene.children.indexOf(this.mesh), 1);
+        }
     }
+    hit(power) {}
 }
