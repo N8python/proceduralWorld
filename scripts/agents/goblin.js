@@ -18,6 +18,55 @@ class Goblin extends Entity {
             console.log(JSON.stringify(object.animations[0]));
         });*/
         let objAdded = false;
+        let barAdded = false;
+        //this.healthCtx = undefined;
+        /*const healthBar = new FLAT.DrawSprite(170, 32, ctx => {
+            this.healthCtx = ctx;
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, 170, 32);
+            ctx.fillStyle = "green";
+            ctx.fillRect(3, 3, 164 * (this.memory.health / 100), 26);
+        })
+        const that = this;
+        healthBar.update = function() {
+            if (that.healthCtx) {
+                that.healthCtx.clearRect(0, 0, 170, 32);
+                this._drawCanvas(that.healthCtx);
+                //const imageData = that.healthCtx.getImageData(0, 0, 170, 32);
+                //const texture = new THREE.Texture(imageData);
+                //texture.minFilter = THREE.LinearFilter;
+                //texture.needsUpdate = true;
+                //that.healthBar.material.dispose();
+                //that.healthBar.material.map = texture;
+                //that.healthBar.material.map = texture;
+                that.healthBar.material.map.needsUpdate = true;
+                that.healthBar.material.needsUpdate = true;
+            }
+        }
+        healthBar.position.y = 180;
+        this.healthBar = healthBar;
+        console.log(healthBar);*/
+        const healthCanvas = document.createElement("canvas");
+        healthCanvas.width = 170;
+        healthCanvas.height = 32;
+        this.healthCtx = healthCanvas.getContext('2d');
+        this.healthCtx.clearRect(0, 0, 170, 32);
+        this.healthCtx.fillStyle = "black";
+        this.healthCtx.fillRect(0, 0, 170, 32);
+        this.healthCtx.fillStyle = "green";
+        this.healthCtx.fillRect(3, 3, 164 * (this.memory.health / 100), 26);
+        const texture = new THREE.CanvasTexture(healthCanvas);
+        texture.minFilter = THREE.LinearFilter;
+        texture.wrapS = THREE.ClampToEdgeWrapping;
+        texture.wrapT = THREE.ClampToEdgeWrapping;
+        const hbMaterial = new THREE.SpriteMaterial({
+            map: texture,
+            transparent: true
+        });
+        const healthBar = new THREE.Sprite(hbMaterial);
+        this.healthBar = healthBar;
+        this.healthBar.position.y = 200;
+        this.healthBar.scale.set(170, 32, 100);
         const weapon = this.scene.models.club.clone();
         weapon.scale.set(250, 250, 250);
         weapon.position.y = 125;
@@ -25,6 +74,10 @@ class Goblin extends Entity {
             if (child.name === "mixamorigRightHand" && !objAdded) {
                 child.add(weapon);
                 objAdded = true;
+            }
+            if (child.name === "mixamorigHead" && !barAdded) {
+                child.add(this.healthBar);
+                barAdded = true;
             }
             if (child.isMesh) {
                 child.castShadow = true;
@@ -54,6 +107,14 @@ class Goblin extends Entity {
         this.onGround = true;
         this.initiated = true;
     }
+    updateHealthBar() {
+        this.healthCtx.clearRect(0, 0, 170, 32);
+        this.healthCtx.fillStyle = "black";
+        this.healthCtx.fillRect(0, 0, 170, 32);
+        this.healthCtx.fillStyle = "green";
+        this.healthCtx.fillRect(3, 3, 164 * (this.memory.health / 100), 26);
+        this.healthBar.material.map.needsUpdate = true;
+    }
     updateStateManager() {
         this.stateManager = states.find(state => state.name === this.state.type);
     }
@@ -71,6 +132,8 @@ class Goblin extends Entity {
         if (this.memory.health <= 0 && this.goal.type !== "death") {
             this.goal = { type: "death", memory: {} };
         }
+        this.updateHealthBar();
+        //this.healthBar.update();
         if (this.scene.chunkLoader.hasChunk(Math.round(this.mesh.position.x), Math.round(this.mesh.position.z))) {
             try {
                 const theGeometry = this.scene.chunkLoader.chunkAt(Math.round(this.mesh.position.x), Math.round(this.mesh.position.z)).mesh.geometry;
@@ -102,7 +165,7 @@ class Goblin extends Entity {
                         this.onGround = true;
                     }
                     if (!this.onGround) {
-                        this.velocity.y -= 0.0015;
+                        this.velocity.y -= 0.0015 * this.scene.timeScale;
                     }
                     /*if (this.onGround) {
                         if ((targetHeight - this.player.position.y) < 0.2) {
@@ -167,6 +230,6 @@ class Goblin extends Entity {
             this.goal = { type: "attack", memory: { target: this.scene.player } }
             this.scene.playerController.cameraShakeTick = 7;
         }
-        this.memory.health -= (Math.random() * 5 * power) + 10;
+        this.memory.health -= (Math.random() * 20 * power) + 10;
     }
 }

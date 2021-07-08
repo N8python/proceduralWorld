@@ -103,7 +103,7 @@ class PlayerController {
                         this.hasBounced = false;
                     }
                     if (!this.onGround) {
-                        this.velocity.y -= 0.0015;
+                        this.velocity.y -= 0.0015 * this.scene.timeScale;
                         if (this.scene.chunkLoader.objectAbove(this.player.position.x, this.player.position.y, this.player.position.z, 0.2) && !this.hasBounced) {
                             this.hasBounced = true;
                             this.velocity.y *= -0.1;

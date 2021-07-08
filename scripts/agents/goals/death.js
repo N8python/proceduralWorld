@@ -6,7 +6,7 @@ const deathGoal = {
         }
         if (agent.state.type !== "death") {
             agent.mesh.traverse(child => {
-                if (child.isMesh && child.material) {
+                if ((child.isMesh || child.isSprite) && child.material) {
                     child.material = child.material.clone();
                 }
             });
@@ -16,7 +16,7 @@ const deathGoal = {
         let timeToDespawn = false;
         if (agent.goal.memory.attackTime > 3000) {
             agent.mesh.traverse(child => {
-                if (child.isMesh && child.material) {
+                if ((child.isMesh || child.isSprite) && child.material) {
                     child.material.transparent = true;
                     child.material.opacity -= 0.01;
                     if (child.material.opacity <= -0.1) {
