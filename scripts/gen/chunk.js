@@ -2,13 +2,18 @@ class Chunk {
     constructor({
         size,
         x,
-        z
+        z,
+        entities = []
     }) {
         this.x = x;
         this.z = z;
         this.id = x * Math.abs(x) + z * Math.abs(z);
         this.size = size;
         this.entities = [];
+        if (entities.length > 0) {
+            this.entities = entities;
+            this.hasEntities = true;
+        }
         this.mesh = this.build();
         //console.log("First: " + this.entities.length);
         for (let i = 0; i < 3; i++) {
@@ -21,7 +26,10 @@ class Chunk {
                 })
             });
         }
-        //console.log("Last: " + this.entities.length);
+        this.entities.forEach(entity => {
+                entity.chunk = this;
+            })
+            //console.log("Last: " + this.entities.length);
     }
     build() {
         const width = this.size;
@@ -85,7 +93,7 @@ class Chunk {
                     color[1] = 150;
                     color[2] = 150;
                     const scaleRand = 1 + 0.15 * randNoise((this.x + x) * 4 + 5000, (this.z + y) * 4 + 5000);
-                    if (x % 0.0625 === 0 && y % 0.0625 === 0 && randNoise((this.x + x) * 16 - 5000 + this.id, (this.z + y) * 16 - 5000 + this.id) > 0.9) {
+                    if (x % 0.0625 === 0 && y % 0.0625 === 0 && randNoise((this.x + x) * 16 - 5000 + this.id, (this.z + y) * 16 - 5000 + this.id) > 0.9 && !this.hasEntities) {
                         this.entities.push(new Rock({
                             x: this.x + x,
                             z: this.z + y,
@@ -127,7 +135,7 @@ class Chunk {
             }
             if (sandIntensity < 0.1) {
                 const scaleRand = 1 + 0.15 * randNoise((this.x + x) * 4 + 5000, (this.z + y) * 4 + 5000);
-                if (x % 0.0625 === 0 && y % 0.0625 === 0 && randNoise((this.x + x) * 16 - 5000 + this.id, (this.z + y) * 16 - 5000 + this.id) > 0.99) {
+                if (x % 0.0625 === 0 && y % 0.0625 === 0 && randNoise((this.x + x) * 16 - 5000 + this.id, (this.z + y) * 16 - 5000 + this.id) > 0.99 && !this.hasEntities) {
                     this.entities.push(new Bush({
                         x: this.x + x,
                         z: this.z + y,
@@ -140,7 +148,7 @@ class Chunk {
             }
             if (rockIntensity < 0.1) {
                 const scaleRand = 1 + 0.15 * randNoise((this.x + x) * 4 + 5000, (this.z + y) * 4 + 5000);
-                if (x % 0.0625 === 0 && y % 0.0625 === 0 && randNoise((this.x + x) * 16 - 5000 + this.id, (this.z + y) * 16 - 5000 + this.id) > 0.975) {
+                if (x % 0.0625 === 0 && y % 0.0625 === 0 && randNoise((this.x + x) * 16 - 5000 + this.id, (this.z + y) * 16 - 5000 + this.id) > 0.975 && !this.hasEntities) {
                     this.entities.push(new Flower({
                         x: this.x + x,
                         z: this.z + y,
@@ -160,7 +168,7 @@ class Chunk {
             }))*/
             let treeIntensity = noise.simplex2((this.x + x + this.id - 15000) * 10, (this.z + y + this.id - 15000) * 10) ** 2.5;
             const scaleRand = 1 + 0.15 * randNoise((this.x + x) * 4 + 5000, (this.z + y) * 4 + 5000);
-            if (treeIntensity > 0.7 && x % 0.25 === 0 && y % 0.25 === 0) {
+            if (treeIntensity > 0.7 && x % 0.25 === 0 && y % 0.25 === 0 && !this.hasEntities) {
                 this.entities.push(new Tree({
                     x: this.x + x,
                     z: this.z + y,
@@ -178,9 +186,9 @@ class Chunk {
             colorSamples[1] = colorSampleG;
             colorSamples[2] = colorSampleB;
             //color = color.map((x, i) => Math.max(Math.min(x + colorSamples[i] * 20, 255), 0));
-            color[0] = Math.max(Math.min(color[0] + colorSamples[0] * 20, 255), 0);
-            color[1] = Math.max(Math.min(color[1] + colorSamples[1] * 20, 255), 0);
-            color[2] = Math.max(Math.min(color[2] + colorSamples[2] * 20, 255), 0);
+            color[0] = Math.max(Math.min(color[0] + colorSamples[0] * 20, 255), 0) * 0.85;
+            color[1] = Math.max(Math.min(color[1] + colorSamples[1] * 20, 255), 0) * 0.85;
+            color[2] = Math.max(Math.min(color[2] + colorSamples[2] * 20, 255), 0) * 0.85;
             data[stride] = color[0];
             data[stride + 1] = color[1];
             data[stride + 2] = color[2];
@@ -204,7 +212,7 @@ class Chunk {
         groundMesh.position.x = this.x;
         groundMesh.position.z = this.z;
         groundMesh.rotation.x = Math.PI / 2;
-        groundMesh.castShadow = true;
+        //groundMesh.castShadow = true;
         groundMesh.receiveShadow = true;
         return groundMesh;
     }
@@ -216,6 +224,11 @@ class Chunk {
         scene.third.scene.children.splice(scene.third.scene.children.indexOf(this.mesh), 1);
         this.entities.forEach(entity => {
             entity.remove(scene);
+        })
+    }
+    update() {
+        this.entities.forEach(entity => {
+            entity.update();
         })
     }
 }

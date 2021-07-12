@@ -134,24 +134,12 @@ class Goblin extends Entity {
         }
         this.updateHealthBar();
         //this.healthBar.update();
+        //this.mesh.rotation.x += 0.1;
         if (this.scene.chunkLoader.hasChunk(Math.round(this.mesh.position.x), Math.round(this.mesh.position.z))) {
             try {
-                const theGeometry = this.scene.chunkLoader.chunkAt(Math.round(this.mesh.position.x), Math.round(this.mesh.position.z)).mesh.geometry;
-                const segments = theGeometry.parameters.widthSegments;
-                const theChunk = this.scene.chunkLoader.chunkAt(Math.round(this.mesh.position.x), Math.round(this.mesh.position.z));
-                let offsetX = (this.mesh.position.x - (theChunk.mesh.position.x - 0.5));
-                let offsetY = (this.mesh.position.z - (theChunk.mesh.position.z - 0.5));
-                if (offsetX < 0) {
-                    offsetX = 1 + offsetX;
-                }
-                if (offsetY < 0) {
-                    offsetY = 1 + offsetY;
-                }
-                offsetY = 1 - offsetY;
-                offsetX = Math.ceil(offsetX * segments);
-                offsetY = Math.ceil(offsetY * segments);
-                const idx = offsetY * (segments + 1) + offsetX;
-                const targetHeight = -theGeometry.attributes.position.getZ(idx);
+                const targetHeight = this.scene.chunkLoader.fastHeightAt(this.mesh.position.x, this.mesh.position.z);
+                //const targetHeightFar = this.scene.chunkLoader.fastHeightAt(this.mesh.position.x + 0.05 * Math.sin(this.mesh.rotation.y), this.mesh.position.z + 0.05 * Math.sin(this.mesh.rotation.z));
+                //this.mesh.rotation.x += (Math.atan2(targetHeightFar - targetHeight, 0.05) - this.mesh.rotation.x) / 5;
                 if (Number.isFinite(this.mesh.position.y)) {
                     if (this.onGround) {
                         this.mesh.position.y += (targetHeight - this.mesh.position.y) / 3;
@@ -165,7 +153,7 @@ class Goblin extends Entity {
                         this.onGround = true;
                     }
                     if (!this.onGround) {
-                        this.velocity.y -= 0.0015 * this.scene.timeScale;
+                        this.velocity.y -= 0.002 * this.scene.timeScale;
                     }
                     /*if (this.onGround) {
                         if ((targetHeight - this.player.position.y) < 0.2) {

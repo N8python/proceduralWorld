@@ -39,7 +39,11 @@ class Entity {
         });
     }
     add(scene) {
+        this.mesh.visible = true;
         scene.third.add.existing(this.mesh);
+        if (this.terrainEntity && this.scene) {
+            this.chunkAlign();
+        }
     }
     remove(scene) {
         this.mesh.visible = false;
@@ -60,5 +64,35 @@ class Entity {
             scene.third.scene.children.splice(scene.third.scene.children.indexOf(this.mesh), 1);
         }
     }
-    hit(power) {}
+    drop(items, {
+        range = 0.25,
+        x = 0,
+        z = 0
+    } = {}) {
+        items.forEach(item => {
+            const itemEntity = new Item({
+                x: this.mesh.position.x + x + Math.random() * range - range / 2,
+                y: this.mesh.position.y + Math.random() * range - range / 2,
+                z: this.mesh.position.z + z + Math.random() * range - range / 2,
+                item: item.item,
+                amount: item.amount
+            })
+            itemEntity.add(mainScene);
+        })
+    }
+    chunkAlign() {
+        if (this.scene.chunkLoader.hasChunk(Math.round(this.mesh.position.x), Math.round(this.mesh.position.z))) {
+            try {
+                this.mesh.position.y = this.scene.chunkLoader.fastHeightAt(this.mesh.position.x, this.mesh.position.z);;
+            } catch (e) {
+
+            }
+        }
+    }
+    update() {
+
+    }
+    hit(power) {
+        //alert("YAY")
+    }
 }

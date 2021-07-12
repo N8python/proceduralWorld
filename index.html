@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mountain</title>
+    <title>Procedural Game</title>
+    <link rel="stylesheet" href="styles.css">
     <script src="lib/phaser.min.js"></script>
     <script src="lib/stats.js"></script>
     <script src="lib/enable3d.phaserExtension.0.22.0-dev.1.min.js"></script>
@@ -18,10 +19,28 @@
     <img id="fleshWound" src="assets/images/fleshwound.png" hidden>
     <img id="critWound" src="assets/images/critwound.png" hidden>
     <img id="lethalWound" src="assets/images/lethalwound.png" hidden>
+    <table style="position:absolute;left:98%;top:98%;transform:translate(-100%, -100%);z-index:30;" id="inventoryDisplay">
+        <tr>
+            <td>0</td>
+            <td>1</td>
+            <td>2</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>4</td>
+            <td>5</td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td>7</td>
+            <td>8</td>
+        </tr>
+    </table>
     <script src="lib/perlin.js"></script>
     <script src="scripts/utils.js"></script>
     <script src="scripts/skeletonutils.js"></script>
     <script src="scripts/entities/entity.js"></script>
+    <script src="scripts/entities/item.js"></script>
     <script src="scripts/entities/tree.js"></script>
     <script src="scripts/entities/rock.js"></script>
     <script src="scripts/entities/bush.js"></script>

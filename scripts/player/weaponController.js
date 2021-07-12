@@ -2,7 +2,7 @@ class WeaponController {
     constructor({
         weapon,
         scene,
-        defaultPosition = { x: 0.6, y: -0.5, z: 0.015 },
+        defaultPosition = { x: 0.5, y: -0.5, z: 0.015 },
         defaultRotation = { x: 0, y: 0, z: 0 }
     }) {
         this.weapon = weapon;
@@ -23,12 +23,25 @@ class WeaponController {
         if (!this.scene) {
             return;
         }
-        [...this.scene.entities, ...this.scene.chunkLoader.chunkAt(Math.round(this.scene.player.position.x), Math.round(this.scene.player.position.z)).entities].forEach(object => {
+        const direction = new THREE.Vector3();
+        const rotation = this.scene.third.camera.getWorldDirection(direction);
+        const cTheta = Math.atan2(rotation.x, rotation.z);
+        const chunks = [
+            this.scene.chunkLoader.chunkAt(Math.round(this.scene.player.position.x), Math.round(this.scene.player.position.z)),
+            this.scene.chunkLoader.chunkAt(Math.round(this.scene.player.position.x + 1), Math.round(this.scene.player.position.z)),
+            this.scene.chunkLoader.chunkAt(Math.round(this.scene.player.position.x - 1), Math.round(this.scene.player.position.z)),
+            this.scene.chunkLoader.chunkAt(Math.round(this.scene.player.position.x), Math.round(this.scene.player.position.z + 1)),
+            this.scene.chunkLoader.chunkAt(Math.round(this.scene.player.position.x), Math.round(this.scene.player.position.z - 1)),
+            this.scene.chunkLoader.chunkAt(Math.round(this.scene.player.position.x + 1), Math.round(this.scene.player.position.z - 1)),
+            this.scene.chunkLoader.chunkAt(Math.round(this.scene.player.position.x - 1), Math.round(this.scene.player.position.z - 1)),
+            this.scene.chunkLoader.chunkAt(Math.round(this.scene.player.position.x + 1), Math.round(this.scene.player.position.z + 1)),
+            this.scene.chunkLoader.chunkAt(Math.round(this.scene.player.position.x - 1), Math.round(this.scene.player.position.z + 1))
+        ];
+        [...this.scene.entities,
+            ...chunks.map(c => c && c.entities ? c.entities : []).flat(Infinity)
+        ].forEach(object => {
             const theta = Math.atan2(object.mesh.position.x - this.scene.player.position.x, object.mesh.position.z - this.scene.player.position.z);
             const dist = Math.hypot(object.mesh.position.x - this.scene.player.position.x, object.mesh.position.z - this.scene.player.position.z);
-            const direction = new THREE.Vector3();
-            const rotation = this.scene.third.camera.getWorldDirection(direction);
-            const cTheta = Math.atan2(rotation.x, rotation.z);
             const angleDiff = cTheta - theta;
             if (angleDiff < rightBound && angleDiff > leftBound) {
                 if (Math.abs(object.mesh.position.y - this.scene.player.position.y) < 0.4 && dist < 0.4) {

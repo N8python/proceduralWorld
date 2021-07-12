@@ -11,6 +11,8 @@ class MainScene extends Scene3D {
     async create() {
         this.third.warpSpeed("-ground", "-orbitControls", "-light");
         mainScene = this;
+        this.sky = this.third.scene.children[0];
+        //this.third.scene.fog = new THREE.Fog("lightblue", 6, 9);
         this.third.load.preload("tree", "./assets/models/tree.fbx");
         this.third.load.preload("darktree", "./assets/models/darktree.glb");
         this.third.load.preload("rock", "./assets/models/rock.fbx");
@@ -19,6 +21,9 @@ class MainScene extends Scene3D {
         this.third.load.preload("axe", "./assets/models/axe.glb");
         this.third.load.preload("goblin", "./assets/models/enemies/goblin/model.fbx");
         this.third.load.preload("club", "./assets/models/club.glb");
+        this.third.load.preload("wood", "./assets/models/wood.glb");
+        this.third.load.preload("berries", "./assets/models/berries.glb");
+        this.third.load.preload("leaf", "./assets/models/leaf.glb");
         this.models = {
             "tree": await this.third.load.fbx("tree"),
             "darktree": (await this.third.load.gltf("darktree")).scene,
@@ -27,7 +32,10 @@ class MainScene extends Scene3D {
             "flower": await this.third.load.fbx("flower"),
             "axe": (await this.third.load.gltf("axe")).scene,
             "goblin": await this.third.load.fbx("goblin"),
-            "club": (await this.third.load.gltf("club")).scene
+            "club": (await this.third.load.gltf("club")).scene,
+            "wood": (await this.third.load.gltf("wood")).scene,
+            "berries": (await this.third.load.gltf("berries")).scene,
+            "leaf": (await this.third.load.gltf("leaf")).scene
         };
         this.images = {
             "fleshWound": document.getElementById("fleshWound"),
@@ -110,39 +118,44 @@ class MainScene extends Scene3D {
             n = this.third.lights.hemisphereLight({ skyColor: 16777215, groundColor: 0, intensity: t }),
             i = this.third.lights.ambientLight({ color: 16777215, intensity: t }),
             r = this.third.lights.directionalLight({ color: 16777215, intensity: t });
+        //this.third.renderer.shadowMap.type = THREE.VSMShadowMap;
         r.position.set(50, 50, 25);
-        const o = 10;
+        //r.shadow.mapSize.set(16384, 8192);
+        const o = 9;
         r.shadow.camera.top = o, r.shadow.camera.bottom = -o, r.shadow.camera.left = -o, r.shadow.camera.right = o, r.shadow.mapSize.set(4096, 4096);
         this.directionalLight = r;
-        /*var shadowHelper = new THREE.CameraHelper(this.directionalLight.shadow.camera);
-        this.third.scene.add(shadowHelper);*/
-        /*const axeMesh = new ExtendedObject3D();
-        axeMesh.add(this.models.axe.clone());
-        axeMesh.scale.set(0.0025, 0.0025, 0.0025);
-        axeMesh.position.z = -0.015;
-        axeMesh.position.x = 0.01;
-        axeMesh.position.y = -0.005;
-        axeMesh.rotateY(-Math.PI / 2);
-        axeMesh.traverse(child => {
-            if (child.isMesh) {
-                child.castShadow = true;
-                child.receiveShadow = true;
-            }
-        })
-        this.third.camera.add(axeMesh);
-        this.weapon = axeMesh;
-        this.third.scene.add(this.third.camera);*/
-        /*this.testGoblin = new Goblin({
-                x: 0,
-                y: 0.1,
-                z: 0,
-                scale: [0.1, 0.1, 0.1],
-                rotation: [0, 0, 0]
-            })*/
-        //this.testGoblin.add(this)
-        //this.models.goblin = this.models.goblin.clone();
-        //this.models.goblin.scale.set(0.0005, 0.0005, 0.0005);
-        //this.models.goblin.position.x = 0.5;
+        const shadowHelper = new THREE.CameraHelper(this.directionalLight.shadow.camera);
+        //this.third.add.existing(shadowHelper);
+        this.third.add.existing(this.directionalLight.target)
+            /*var shadowHelper = new THREE.CameraHelper(this.directionalLight.shadow.camera);
+            this.third.scene.add(shadowHelper);*/
+            /*const axeMesh = new ExtendedObject3D();
+            axeMesh.add(this.models.axe.clone());
+            axeMesh.scale.set(0.0025, 0.0025, 0.0025);
+            axeMesh.position.z = -0.015;
+            axeMesh.position.x = 0.01;
+            axeMesh.position.y = -0.005;
+            axeMesh.rotateY(-Math.PI / 2);
+            axeMesh.traverse(child => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            })
+            this.third.camera.add(axeMesh);
+            this.weapon = axeMesh;
+            this.third.scene.add(this.third.camera);*/
+            /*this.testGoblin = new Goblin({
+                    x: 0,
+                    y: 0.1,
+                    z: 0,
+                    scale: [0.1, 0.1, 0.1],
+                    rotation: [0, 0, 0]
+                })*/
+            //this.testGoblin.add(this)
+            //this.models.goblin = this.models.goblin.clone();
+            //this.models.goblin.scale.set(0.0005, 0.0005, 0.0005);
+            //this.models.goblin.position.x = 0.5;
         this.entities = [];
         this.testGoblin = new Goblin({
             x: 0,
@@ -180,14 +193,16 @@ class MainScene extends Scene3D {
         this.delta = delta;
         this.timeScale = 0.95 * this.timeScale + 0.05 * (delta / (1000 / 60));
         //this.sunAngle += 0.001 * this.timeScale;
-        //this.directionalLight.position.set(this.player.position.x + 25, this.player.position.y + 50, this.player.position.z + 25);
-        /* this.directionalLight.shadow.camera.top = (this.player.position.x + 0.5);
-         this.directionalLight.shadow.camera.bottom = (this.player.position.x - 0.5);
-         this.directionalLight.shadow.camera.left = (this.player.position.z - 0.5);
-         this.directionalLight.shadow.camera.right = (this.player.position.z + 0.5);*/
+        this.directionalLight.position.set(this.player.position.x + 50, this.player.position.y + 50, this.player.position.z + 25);
+        //this.directionalLight.shadow.camera.top = -(this.player.position.x + 0.5);
+        //this.directionalLight.shadow.camera.bottom = -(this.player.position.x - 0.5);
+        //this.directionalLight.shadow.camera.left = -(this.player.position.z - 0.5);
+        //this.directionalLight.shadow.camera.right = -(this.player.position.z + 0.5);
+        //this.directionalLight.shadow.camera.lookAt(this.player.position);
+        this.directionalLight.target.position.x = this.player.position.x;
+        this.directionalLight.target.position.z = this.player.position.z; //.copy(this.player.position);
         this.directionalLight.shadow.camera.updateProjectionMatrix();
         this.directionalLight.updateMatrix();
-        this.directionalLight.shadow.mapSize.set(2048, 2048);
         this.playerController.update();
         this.chunkLoader.update();
         this.entities.forEach(entity => {

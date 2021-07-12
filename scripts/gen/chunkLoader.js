@@ -10,6 +10,7 @@ class ChunkLoader extends ChunkManager {
             z: Infinity
         };
         this.needToLoad = [];
+        this.chunkCache = {};
     }
     load({
         maxTime,
@@ -23,7 +24,7 @@ class ChunkLoader extends ChunkManager {
         if (chunksNeeded.length === 0) {
             for (let x = origin.x - 8; x <= origin.x + 8; x++) {
                 for (let z = origin.z - 8; z <= origin.z + 8; z++) {
-                    let size = 128;
+                    let size = 64;
                     if (Math.abs(x - origin.x) > 1 || Math.abs(z - origin.z) > 1) {
                         size = 64;
                     }
@@ -45,15 +46,24 @@ class ChunkLoader extends ChunkManager {
             if (this.chunkDist({ x, z }) > 8) {
                 return;
             }
+            let chunk;
+            let chunkKey = x + "," + z;
+            let chunkEntities = this.chunkCache[chunkKey] ? this.chunkCache[chunkKey] : undefined;
             if (!this.hasChunk(x, z)) {
-                chunksToCompute.push(this.addAtCoords(x, z, size));
+                chunk = this.addAtCoords(x, z, size, chunkEntities);
+                chunksToCompute.push();
             } else {
                 const c = this.chunkAt(x, z);
                 if (c.size !== size) {
                     this.removeAtCoords(x, z, size);
-                    chunksToCompute.push(this.addAtCoords(x, z, size));
+                    chunk = this.addAtCoords(x, z, size, chunkEntities);
+                    //chunksToCompute.push(this.addAtCoords(x, z, size));
                 }
             }
+            if (!Object.keys(this.chunkCache).includes(chunkKey)) {
+                this.chunkCache[chunkKey] = chunk.entities;
+            }
+            chunksToCompute.push(chunk);
             timeLoading += performance.now() - lastLoad;
             lastLoad = performance.now();
             if (timeLoading > maxTime) {
@@ -91,6 +101,24 @@ class ChunkLoader extends ChunkManager {
         })
         return highestPoint;
     }
+    fastHeightAt(x, z) {
+        const theGeometry = this.chunkAt(Math.round(x), Math.round(z)).mesh.geometry;
+        const segments = theGeometry.parameters.widthSegments;
+        const theChunk = this.chunkAt(Math.round(x), Math.round(z));
+        let offsetX = (x - (theChunk.mesh.position.x - 0.5));
+        let offsetY = (z - (theChunk.mesh.position.z - 0.5));
+        if (offsetX < 0) {
+            offsetX = 1 + offsetX;
+        }
+        if (offsetY < 0) {
+            offsetY = 1 + offsetY;
+        }
+        offsetY = 1 - offsetY;
+        offsetX = Math.ceil(offsetX * segments);
+        offsetY = Math.ceil(offsetY * segments);
+        const idx = offsetY * (segments + 1) + offsetX;
+        return -theGeometry.attributes.position.getZ(idx);
+    }
     objectAbove(x, y, z, tolerance) {
         const theChunk = this.chunkAt(Math.round(x), Math.round(z));
         const startPoint = new THREE.Vector3(x, y, z);
@@ -120,6 +148,7 @@ class ChunkLoader extends ChunkManager {
         return false;
     }
     update() {
+        this.scene.sky.position.copy(this.target.position);
         if (this.currCenterChunk.x !== Math.floor(this.target.position.x) || this.currCenterChunk.z !== Math.floor(this.target.position.z)) {
             this.load({
                 maxTime: 1
@@ -134,6 +163,7 @@ class ChunkLoader extends ChunkManager {
             });
         }
         this.chunks.forEach(chunk => {
+            chunk.update();
             if (this.chunkDist(chunk) > 8) {
                 this.remove(chunk);
             }

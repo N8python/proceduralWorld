@@ -18,12 +18,12 @@ const deathGoal = {
             agent.mesh.traverse(child => {
                 if ((child.isMesh || child.isSprite) && child.material) {
                     child.material.transparent = true;
-                    child.material.opacity -= 0.01;
+                    child.material.opacity -= 0.01 * agent.scene.timeScale;
                     if (child.material.opacity <= -0.1) {
                         timeToDespawn = true;
                     }
                 }
-            })
+            });
         }
         if (timeToDespawn) {
             const agentIndex = agent.scene.entities.indexOf(agent);

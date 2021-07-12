@@ -20,6 +20,7 @@ class PlayerController {
             defaultRotation: { x: 0, y: -Math.PI / 2.4, z: 0 }
         });
         this.bob = 0;
+        this.weaponName = "axe";
         this.weaponState = "idle";
         this.weaponStates = [];
         this.roll = 0;
@@ -31,6 +32,169 @@ class PlayerController {
             criticalWounds: 0,
             lethalWounds: 0
         }
+        this.inventory = [
+            [null, null, null],
+            [null, { item: "axe", amount: 1 }, null],
+            [null, null, null]
+        ];
+        this.inventoryNode = document.getElementById("inventoryDisplay");
+        //this.displayInventory(this.inventoryNode);
+        setTimeout(() => {
+            this.displayInventory(this.inventoryNode);
+        }, 500);
+        setTimeout(() => {
+            this.displayInventory(this.inventoryNode);
+        }, 600);
+        //this.displayInventory(this.inventoryNode);
+    }
+    displayInventory(node) {
+        node = node.children[0]
+        Array.from(node.children).forEach((child, i) => {
+            Array.from(child.children).forEach((child2, j) => {
+                if (this.inventory[i][j] !== null) {
+                    const img = document.createElement("img");
+                    img.src = `assets/images/items/${this.inventory[i][j].item}.png`;
+                    let height = 0;
+                    let width = 0;
+                    if (img.width > img.height) {
+                        width = "40px";
+                        height = "auto";
+                    } else {
+                        width = "auto";
+                        height = "40px";
+                    }
+                    //child2.innerHTML = `<div draggable="true"><img src="assets/images/items/${this.inventory[i][j].item}.png" height="${height}" width="${width}"><span style="position:relative;">${this.inventory[i][j].amount > 1 ? this.inventory[i][j].amount: ""}<span></div>`;
+                    child2.innerHTML = "";
+                    child2.ondragstart = (e) => {
+                        e.dataTransfer.setData('text/plain', JSON.stringify({ items: this.inventory[i][j], source: [i, j] }));
+                    }
+                    child2.ondragenter = (e) => {
+                        e.preventDefault();
+                    }
+                    child2.ondragover = (e) => {
+                        e.preventDefault();
+                    }
+                    child2.ondrop = (e) => {
+                        const transfer = e.dataTransfer.getData('text/plain');
+                        const data = JSON.parse(transfer);
+                        if (this.inventory[i][j].item === this.inventory[data.source[0]][data.source[1]].item) {
+                            const temp = this.inventory[i][j];
+                            if (this.keys.shift.isDown && this.inventory[i][j].amount < STACK_SIZE) {
+                                this.inventory[data.source[0]][data.source[1]].amount--;
+                                this.inventory[i][j].amount++;
+                                if (this.inventory[data.source[0]][data.source[1]] <= 0) {
+                                    this.inventory[data.source[0]][data.source[1]] = null;
+                                }
+                            } else {
+                                let transferAmount = Math.min(data.items.amount, STACK_SIZE - temp.amount);
+                                this.inventory[i][j] = { item: data.items.item, amount: transferAmount + temp.amount };
+                                this.inventory[data.source[0]][data.source[1]].amount -= transferAmount;
+                                if (this.inventory[data.source[0]][data.source[1]].amount <= 0) {
+                                    this.inventory[data.source[0]][data.source[1]] = null;
+                                }
+                            }
+                        } else {
+                            const temp = this.inventory[i][j];
+                            this.inventory[i][j] = data.items;
+                            this.inventory[data.source[0]][data.source[1]] = temp;
+                        }
+                        this.displayInventory(this.inventoryNode);
+                    }
+                    child2.oncontextmenu = (e) => {
+                        e.preventDefault();
+                    }
+                    const itemDiv = document.createElement("div");
+                    itemDiv.setAttribute("draggable", true);
+                    itemDiv.style.userSelect = "none";
+                    itemDiv.oncontextmenu = (e) => {
+                        e.preventDefault();
+                    }
+                    const itemImg = document.createElement("img");
+                    itemImg.src = `assets/images/items/${this.inventory[i][j].item}.png`;
+                    itemImg.setAttribute("height", height);
+                    itemImg.setAttribute("width", width);
+                    const spanTab = document.createElement("span");
+                    spanTab.style.position = "absolute";
+                    spanTab.style.marginTop = "24px";
+                    if (width === "40px") {
+                        spanTab.style.marginLeft = "-12px";
+                    }
+                    spanTab.innerHTML = this.inventory[i][j].amount > 1 ? this.inventory[i][j].amount : "";
+                    itemDiv.appendChild(itemImg);
+                    itemDiv.appendChild(spanTab);
+                    child2.appendChild(itemDiv);
+                } else {
+                    child2.innerHTML = "";
+                    child2.ondragenter = (e) => {
+                        e.preventDefault();
+                    }
+                    child2.ondragover = (e) => {
+                        e.preventDefault();
+                    }
+                    child2.ondrop = (e) => {
+                        const transfer = e.dataTransfer.getData('text/plain');
+                        const data = JSON.parse(transfer);
+                        if (this.inventory[i][j] === null) {
+                            if (this.keys.shift.isDown) {
+                                this.inventory[data.source[0]][data.source[1]].amount--;
+                                if (this.inventory[data.source[0]][data.source[1]] <= 0) {
+                                    this.inventory[data.source[0]][data.source[1]] = null;
+                                }
+                                this.inventory[i][j] = { item: data.items.item, amount: 1 };
+                            } else {
+                                this.inventory[i][j] = data.items;
+                                this.inventory[data.source[0]][data.source[1]] = null;
+                            }
+                            this.displayInventory(this.inventoryNode);
+                        }
+                    }
+                    const itemDiv = document.createElement("div")
+                    itemDiv.style.width = "40px";
+                    itemDiv.style.height = "40px";
+                    child2.appendChild(itemDiv);
+                    //child2.innerHTML = `<div style="width:40px;height:40px;"></div>`;
+                }
+            });
+        });
+    }
+    addToInventory(item) {
+        item = {...item };
+        let itemsToAdd = [item];
+        if (item.amount > STACK_SIZE) {
+            itemsToAdd = []
+            while (item.amount > STACK_SIZE) {
+                item.amount -= STACK_SIZE;
+                itemsToAdd.push({ item: item.item, amount: STACK_SIZE });
+            }
+            itemsToAdd.push({ item: item.item, amount: item.amount });
+        }
+        const idxsAdded = [];
+        itemsToAdd.forEach((item, idx) => {
+            let added = false;
+            for (let i = 0; i < this.inventory.length; i++) {
+                for (let j = 0; j < this.inventory[0].length; j++) {
+                    if (this.inventory[i][j] === null && !added) {
+                        this.inventory[i][j] = item;
+                        idxsAdded.push(idx);
+                        added = true;
+                    } else if (this.inventory[i][j] !== null && this.inventory[i][j].item === item.item) {
+                        const transferAmount = Math.min(item.amount, STACK_SIZE - this.inventory[i][j].amount);
+                        this.inventory[i][j].amount += transferAmount;
+                        if (transferAmount === item.amount) {
+                            idxsAdded.push(idx);
+                            added = true;
+                        }
+                        item.amount -= transferAmount;
+                    }
+                }
+            }
+        });
+        itemsToAdd.forEach((item, idx) => {
+            if (!idxsAdded.includes(idx)) {
+
+            }
+        })
+        this.displayInventory(this.inventoryNode);
     }
     update() {
         const o = new THREE.Vector3();
@@ -64,9 +228,10 @@ class PlayerController {
             this.velocity.z += speed * this.scene.timeScale * Math.cos(theta - Math.PI / 2);
             bobFactor = 2;
         }
-        if (this.keys.space.isDown && this.onGround) {
-            this.velocity.y += 0.01 * speedMultiplier;
-            this.onGround = false;
+        if (this.keys.space.isDown && this.onGround && !this.doJump) {
+            this.velocity.y += 0.01 * speedMultiplier * this.scene.timeScale;
+            //this.onGround = false;
+            this.doJump = true;
         }
         this.roll += (this.targetRoll - this.roll) / 10;
         if (Math.abs(this.targetRoll - this.roll) < 0.005) {
@@ -85,7 +250,7 @@ class PlayerController {
                 const targetHeight = this.scene.chunkLoader.heightAt(this.player.position.x, this.player.position.z) + 0.2;
                 if (Number.isFinite(targetHeight)) {
                     if (this.onGround) {
-                        if ((targetHeight - this.player.position.y) < 0.2) {
+                        if ((targetHeight - this.player.position.y) < 0.2 && !this.doJump) {
                             this.player.position.y += (targetHeight - this.player.position.y) / 5;
                         } else {
                             this.velocity.x *= -0.9;
@@ -93,9 +258,13 @@ class PlayerController {
                             this.player.position.x += 2 * this.velocity.x;
                             this.player.position.z += 2 * this.velocity.z;
                         }
+                        if (this.doJump) {
+                            this.velocity.y += 0.01 * speedMultiplier * this.scene.timeScale;
+                        }
                     }
                     if ((this.player.position.y - targetHeight) > 0.2) {
                         this.onGround = false;
+                        this.doJump = false;
                     } else {
                         this.onGround = true;
                     }
@@ -103,7 +272,7 @@ class PlayerController {
                         this.hasBounced = false;
                     }
                     if (!this.onGround) {
-                        this.velocity.y -= 0.0015 * this.scene.timeScale;
+                        this.velocity.y -= 0.002 * this.scene.timeScale;
                         if (this.scene.chunkLoader.objectAbove(this.player.position.x, this.player.position.y, this.player.position.z, 0.2) && !this.hasBounced) {
                             this.hasBounced = true;
                             this.velocity.y *= -0.1;
@@ -115,6 +284,18 @@ class PlayerController {
             }
         }
         this.weaponController.update();
+        if (this.inventory[1][1] && this.inventory[1][1].item !== this.weaponName) {
+            this.weaponName = this.inventory[1][1].item;
+            this.weapon.children = [];
+            let weaponModel = mainScene.models[this.weaponName].clone();
+            this.weapon.add(weaponModel);
+            this.weapon.scale.set(...(PlayerController.items[this.weaponName] ? PlayerController.items[this.weaponName] : [0.002, 0.002, 0.002]));
+            weaponModel.rotation.set(...(PlayerController.itemsRot[this.weaponName] ? PlayerController.itemsRot[this.weaponName] : [0, 0, 0]));
+            weaponModel.position.set(...(PlayerController.itemsPos[this.weaponName] ? PlayerController.itemsPos[this.weaponName] : [0, 0, 0]));
+        } else if (this.inventory[1][1] === null && this.weaponName !== null) {
+            this.weaponName = null;
+            this.weapon.children = [];
+        }
         this.scene.third.camera.position.y += this.bob * bobFactor;
         let timeMultiplier = Math.min(1 + 0.04 * this.health.fleshWounds + 0.12 * this.health.criticalWounds, 1.6);
         if (this.weaponStates.length > 0) {
@@ -239,4 +420,23 @@ class PlayerController {
         }
         this.health.lethalWounds = Math.max(Math.min(this.health.lethalWounds, 1), 0);
     }
+}
+PlayerController.items = {
+    "axe": [0.002, 0.002, 0.002],
+    "berries": [0.002, 0.002, 0.002],
+    "leaf": [0.0075, 0.0075, 0.0075],
+    "wood": [0.003, 0.003, 0.003],
+    "flower": [0.000025, 0.000025, 0.000025],
+    "rock": [0.000025, 0.000025, 0.000025]
+}
+PlayerController.itemsRot = {
+    "leaf": [Math.PI / 2, 0, 0],
+    "wood": [Math.PI / 2, 0, 0],
+    "rock": [Math.PI / 2, 0, 0],
+}
+PlayerController.itemsPos = {
+    "leaf": [0, 0, 0],
+    "berries": [0, -1.25, 0],
+    "flower": [0, -125, 0],
+    "rock": [0, 0, 0]
 }

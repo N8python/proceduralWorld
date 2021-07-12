@@ -131,11 +131,12 @@ class ChunkManager {
         // this.scene.third.physics.add.existing(chunk.mesh, { shape: "hull" });
         // chunk.mesh.body.setCollisionFlags(2);
     }
-    addAtCoords(x, z, size) {
+    addAtCoords(x, z, size, entities) {
         const c = new Chunk({
             size,
             x,
-            z
+            z,
+            entities
         });
         this.add(c);
         return c;

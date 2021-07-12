@@ -11,7 +11,7 @@ function hash32shift(key) {
 function randNoise(x, y, seed = 1) {
     return hash32shift(seed + hash32shift(x + hash32shift(y))) / 2147483647;
 }
-const easeInOut = x => x < .5 ? 2 * x * x : -1 + (4 - 2 * x) * x;
+const easeInOut = x => x ** (3 / 5);
 
 function angleDifference(angle1, angle2) {
     const diff = ((angle2 - angle1 + Math.PI) % (Math.PI * 2)) - Math.PI;
